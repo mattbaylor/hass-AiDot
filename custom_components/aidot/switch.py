@@ -102,6 +102,9 @@ class AidotSwitch(CoordinatorEntity[AidotDeviceUpdateCoordinator], SwitchEntity)
         self.async_write_ha_state()
 
     def _update_status(self) -> None:
+        import logging
+        _LOGGER = logging.getLogger(__name__)
+        _LOGGER.debug(f"Switch {self._attr_unique_id}: online={self.coordinator.data.online}, on={self.coordinator.data.on}")
         self._attr_available = self.coordinator.data.online
         self._attr_is_on = self.coordinator.data.on
 
