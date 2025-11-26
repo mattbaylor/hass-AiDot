@@ -114,7 +114,7 @@ class AidotDeviceManagerCoordinator(DataUpdateCoordinator[None]):
             device
             for device in data.get(CONF_DEVICE_LIST)
             if (
-                device[CONF_TYPE] == Platform.LIGHT
+                device[CONF_TYPE] in (Platform.LIGHT, Platform.SWITCH)
                 and CONF_AES_KEY in device
                 and device[CONF_AES_KEY][0] is not None
             )

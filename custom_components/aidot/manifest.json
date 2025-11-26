@@ -1,11 +1,11 @@
 {
   "domain": "aidot",
-  "name": "AiDot Lights Local",
-  "codeowners": ["@s1eedz", "@HongBryan"],
+  "name": "AiDot Lights & Switches Local",
+  "codeowners": ["@s1eedz", "@HongBryan", "@mattbaylor"],
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/aidot",
   "iot_class": "local_polling",
   "quality_scale": "bronze",
   "requirements": ["python-aidot==0.3.44"],
-  "version": "1.0.8"
+  "version": "1.0.9-switch-support"
 }
