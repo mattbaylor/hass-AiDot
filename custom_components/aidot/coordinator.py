@@ -94,6 +94,7 @@ class AidotDeviceManagerCoordinator(DataUpdateCoordinator[None]):
         self.client.start_discover()
         self.client.set_token_fresh_cb(self.token_fresh_cb)
         self.device_coordinators: dict[str, AidotDeviceUpdateCoordinator] = {}
+        self.device_types: dict[str, str] = {}  # Track device type for each device_id
         self.previous_lists: set[str] = set()
 
     async def _async_setup(self) -> None:
@@ -110,15 +111,25 @@ class AidotDeviceManagerCoordinator(DataUpdateCoordinator[None]):
         except AidotAuthFailed as error:
             self.token_fresh_cb()
             raise ConfigEntryError from error
+        
+        # DEBUG: Log all devices received from API
+        all_devices = data.get(CONF_DEVICE_LIST, [])
+        _LOGGER.debug(f"Received {len(all_devices)} devices from AiDot API")
+        for device in all_devices:
+            _LOGGER.debug(f"Device: id={device.get(CONF_ID)}, type={device.get(CONF_TYPE)}, has_aes_key={CONF_AES_KEY in device}")
+        
         filter_device_list = [
             device
             for device in data.get(CONF_DEVICE_LIST)
             if (
-                device[CONF_TYPE] in (Platform.LIGHT, Platform.SWITCH)
-                and CONF_AES_KEY in device
+                # Temporarily accept ALL device types to see what we get
+                # device[CONF_TYPE] in (Platform.LIGHT, Platform.SWITCH)
+                CONF_AES_KEY in device
                 and device[CONF_AES_KEY][0] is not None
             )
         ]
+        
+        _LOGGER.debug(f"Filtered to {len(filter_device_list)} devices (lights and switches with AES keys)")
 
         delete_lists = self.previous_lists - (
             current_lists := {device[CONF_ID] for device in filter_device_list}
@@ -133,6 +144,13 @@ class AidotDeviceManagerCoordinator(DataUpdateCoordinator[None]):
 
         for device in filter_device_list:
             dev_id = device.get(CONF_ID)
+            device_type = device.get(CONF_TYPE)
+            
+            # Store device type for filtering in platforms
+            if dev_id:
+                self.device_types[dev_id] = device_type
+                _LOGGER.debug(f"Storing device type for {dev_id}: {device_type}")
+            
             if dev_id not in self.device_coordinators:
                 device_client = self.client.get_device_client(device)
                 device_coordinator = AidotDeviceUpdateCoordinator(

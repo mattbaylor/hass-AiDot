@@ -17,6 +17,18 @@ from .const import DOMAIN
 from .coordinator import AidotConfigEntry, AidotDeviceUpdateCoordinator
 
 
+def _is_switch_device(coordinator, device_id: str) -> bool:
+    """Check if device is a plug/switch (not a light)."""
+    device_type = coordinator.device_types.get(device_id, "")
+    # Accept devices that have 'plug' or 'switch' in their type
+    # Explicitly exclude lights
+    is_plug = "plug" in device_type.lower()
+    is_switch = "switch" in device_type.lower()
+    is_light = "light" in device_type.lower() or "bulb" in device_type.lower()
+    
+    return (is_plug or is_switch) and not is_light
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: AidotConfigEntry,
@@ -33,6 +45,7 @@ async def async_setup_entry(
         new_lists = {
             device_coordinator.device_client.device_id
             for device_coordinator in coordinator.device_coordinators.values()
+            if _is_switch_device(coordinator, device_coordinator.device_client.device_id)
         }
 
         if new_lists - lists_added:
